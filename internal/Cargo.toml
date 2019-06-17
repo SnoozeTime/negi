@@ -1,0 +1,14 @@
+[package]
+name = "negi_macro"
+version = "0.1.0"
+authors = ["Benoit Eudier <benoit.eudier@gmail.com>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+negi-core = { path = "../negi-core" }
+proc-macro2 = "0.4"
+quote = "0.6.3"
+syn = {version="0.15.22", features = ["full"]}
