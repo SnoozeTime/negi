@@ -16,3 +16,5 @@ redis = "0.10.0"
 rayon = "1.1.0"
 
 diesel = { version = "1.4.0", features = ["chrono", "uuid", "r2d2", "postgres"] }
+tokio = "0.1.21"
+futures = "0.1"

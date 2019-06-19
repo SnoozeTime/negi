@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use diesel::sql_types::Text;
 use diesel::QueryableByName;
-use negi_core::Task;
+use negi_core::{Dispatcher, Task};
 use serde_derive::{Deserialize, Serialize};
 use std::thread;
 use std::time::Duration;
@@ -12,6 +12,7 @@ use negi_macro::task;
 fn MyCustom(some_string: String, x: u32) {
     println!("HHHHHH {} + {}", some_string, x);
 }
+
 // ---------------------------------
 
 fn dispatch() -> Result<(), redis::RedisError> {
@@ -40,16 +41,17 @@ fn dispatch() -> Result<(), redis::RedisError> {
         std::thread::sleep(Duration::from_millis(100));
     }
 }
-
-fn ser(event: &dyn Task) -> String {
-    serde_json::to_string(event).unwrap()
-}
-
-fn deser(payload: String) -> Box<dyn Task> {
-    serde_json::from_str(&payload).unwrap()
-}
-
+//
+//fn ser(event: &dyn Task) -> String {
+//    serde_json::to_string(event).unwrap()
+//}
+//
+//fn deser(payload: String) -> Box<dyn Task> {
+//    serde_json::from_str(&payload).unwrap()
+//}
+//
 fn main() -> Result<(), redis::RedisError> {
     //deser(encoded.unwrap()).inspect();
-    dispatch()
+    let dispatcher = Dispatcher::default();
+    dispatcher.run()
 }
