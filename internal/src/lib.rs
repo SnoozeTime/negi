@@ -38,15 +38,27 @@ pub fn task(macro_args: TokenStream, input: TokenStream) -> TokenStream {
         })
         .collect();
 
+    let ctor_arg: Vec<_> = args
+        .iter()
+        .map(|arg| match arg {
+            FnArg::Captured(capt) => {
+                let pat = capt.pat.clone();
+                quote!(#pat)
+            }
+            _ => panic!("Cannot capture that"),
+        })
+        .collect();
     let mod_root = if let parse::MacroArgs::Custom(root) = macro_args {
         root
     } else {
         Ident::new("negi", Span::call_site())
     };
+
+    let module_ident = Ident::new(&format!("{}_mod", ident), Span::call_site());
     quote!(
 
-        pub use #ident::#ident;
-        pub mod #ident {
+        pub use #module_ident::#ident;
+        pub mod #module_ident {
 
             use serde_derive::{Serialize, Deserialize};
             use #mod_root::Task;
@@ -59,6 +71,16 @@ pub fn task(macro_args: TokenStream, input: TokenStream) -> TokenStream {
                 fn execute(&self) {
                     #( #cloned )*
                     #block
+                }
+            }
+
+
+            impl #ident {
+
+                pub fn new(#args) -> Self {
+                    Self {
+                        #( #ctor_arg, )*
+                    }
                 }
             }
         }
