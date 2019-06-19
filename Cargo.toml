@@ -1,2 +1,15 @@
+[package]
+name = "negi"
+version = "0.0.1"
+authors = ["Benoit Eudier <benoit.eudier@gmail.com>"]
+description = "Celeri-like task dispatcher"
+repository = "https://github.com/snoozetime/negi"
+edition = "2018"
+
 [workspace]
 members = ["negi-core", "internal", "negi-bin"]
+
+
+[dependencies]
+negi_macro = { path = "internal" }
+negi-core = { path = "negi-core" }
