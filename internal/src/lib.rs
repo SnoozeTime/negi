@@ -4,12 +4,11 @@ extern crate quote;
 
 use proc_macro::TokenStream;
 
-use syn::Block;
 use syn::FnArg;
 use syn::ItemFn;
 
 #[proc_macro_attribute]
-pub fn task(args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn task(_args: TokenStream, input: TokenStream) -> TokenStream {
     let fun: ItemFn = syn::parse_macro_input!(input as ItemFn);
     let ident = fun.ident;
     let block = fun.block;

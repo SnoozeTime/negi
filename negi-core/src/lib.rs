@@ -13,11 +13,10 @@
 //! Should generate a struct + trait implementation for Task
 //!
 //!
-use futures::Future;
-use redis::Cmd;
 use std::default::Default;
 
 pub const DEFAULT_TOPIC: &'static str = "negi_topic";
+pub const LOCAL_URL: &'static str = "redis://127.0.0.1";
 
 #[typetag::serde(tag = "type")]
 pub trait Task: Send + Sync {
@@ -26,12 +25,14 @@ pub trait Task: Send + Sync {
 
 pub struct Dispatcher {
     topic: String,
+    redis_url: String,
 }
 
 impl Default for Dispatcher {
     fn default() -> Self {
         Self {
             topic: DEFAULT_TOPIC.to_owned(),
+            redis_url: LOCAL_URL.to_owned(),
         }
     }
 }
@@ -39,8 +40,8 @@ impl Default for Dispatcher {
 impl Dispatcher {
     /// Create a task dispatcher that will listen to `topic` list
     /// on redis
-    pub fn new(topic: String) -> Self {
-        Self { topic }
+    pub fn new(redis_url: String, topic: String) -> Self {
+        Self { topic, redis_url }
     }
 
     /// Will run the dispatcher. This is a blocking call as it will
@@ -54,7 +55,7 @@ impl Dispatcher {
             .build()
             .unwrap();
 
-        let client = redis::Client::open("redis://127.0.0.1/")?;
+        let client = redis::Client::open(self.redis_url.as_str())?;
         let con: redis::Connection = client.get_connection()?;
         'dispatch_loop: loop {
             // BLPOP is blocking. It will not return until element is
@@ -68,7 +69,6 @@ impl Dispatcher {
             match task {
                 Ok(task) => {
                     pool.spawn(move || task.execute());
-                    println!("hi");
                 }
                 Err(err) => println!("Error {:?}", err),
             }
@@ -81,23 +81,3 @@ pub struct Client<B: Send + Sync> {
 }
 
 pub type RedisClient = Client<redis::Client>;
-
-use std::thread;
-pub fn send(client: &redis::Client) -> impl Future<Item = (), Error = redis::RedisError> {
-    client
-        .get_async_connection()
-        .and_then(|c| {
-            redis::cmd("RPUSH")
-                .arg(DEFAULT_TOPIC)
-                .arg("HI")
-                .query_async::<_, String>(c)
-        })
-        .and_then(|(conn, _)| futures::future::ok(()))
-}
-
-fn lol() {
-    let c = redis::Client::open("localhost").unwrap();
-    thread::spawn(move || {
-        send(&c);
-    });
-}
