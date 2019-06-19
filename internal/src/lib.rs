@@ -3,17 +3,18 @@ extern crate proc_macro;
 extern crate quote;
 
 use proc_macro::TokenStream;
+use proc_macro2::Span;
+use syn::{FnArg, Ident, ItemFn};
 
-use syn::FnArg;
-use syn::ItemFn;
+mod parse;
 
 #[proc_macro_attribute]
-pub fn task(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn task(macro_args: TokenStream, input: TokenStream) -> TokenStream {
     let fun: ItemFn = syn::parse_macro_input!(input as ItemFn);
     let ident = fun.ident;
     let block = fun.block;
     let args = (*fun.decl).inputs;
-
+    let macro_args = syn::parse_macro_input!(macro_args as parse::MacroArgs);
     let cloned: Vec<_> = args
         .iter()
         .map(|arg| match arg {
@@ -36,16 +37,29 @@ pub fn task(_args: TokenStream, input: TokenStream) -> TokenStream {
             _ => panic!("Cannot capture that"),
         })
         .collect();
+
+    let mod_root = if let parse::MacroArgs::Custom(root) = macro_args {
+        root
+    } else {
+        Ident::new("negi", Span::call_site())
+    };
     quote!(
 
-        #[derive(Serialize, Deserialize)]
-        pub struct #ident{#( #pub_fields )*}
+        pub use #ident::#ident;
+        pub mod #ident {
 
-        #[typetag::serde]
-        impl Task for  #ident {
-            fn execute(&self) {
-                #( #cloned )*
-                #block
+            use serde_derive::{Serialize, Deserialize};
+            use #mod_root::Task;
+
+            #[derive(Serialize, Deserialize)]
+            pub struct #ident{#( #pub_fields )*}
+
+            #[typetag::serde]
+            impl Task for  #ident {
+                fn execute(&self) {
+                    #( #cloned )*
+                    #block
+                }
             }
         }
     )

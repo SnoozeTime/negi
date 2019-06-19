@@ -1,14 +1,13 @@
-use negi_core::DEFAULT_TOPIC;
+use negi_core::{Task, DEFAULT_TOPIC};
 use tokio::prelude::*;
 
-use negi_core::Task;
 use negi_macro::task;
-use serde_derive::{Deserialize, Serialize};
 
-#[task]
+#[task(module)]
 fn MyCustom(some_string: String, x: u32) {
     println!("HHHHHH {} + {}", some_string, x);
 }
+
 fn ser(event: &dyn Task) -> String {
     serde_json::to_string(event).unwrap()
 }
