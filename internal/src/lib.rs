@@ -74,7 +74,6 @@ pub fn task(macro_args: TokenStream, input: TokenStream) -> TokenStream {
                 }
             }
 
-
             impl #ident {
 
                 pub fn new(#args) -> Self {
