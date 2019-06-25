@@ -78,17 +78,24 @@ impl RedisBackend {
 
 impl Backend for RedisBackend {
     fn send(&self, t: &dyn Task) -> Result<(), Error> {
-        Ok(())
+        let packet = serde_json::to_string(t).unwrap();
+        let conn = self.inner.get_connection()?;
+        ::redis::cmd("RPUSH")
+            .arg(&self.topic)
+            .arg(packet)
+            .query(&conn)
+            .map_err(|e| e.into())
     }
 
     fn send_async(&self, t: &dyn Task) -> Box<Future<Item = (), Error = Error> + Send> {
         let packet = serde_json::to_string(t).unwrap();
+        let topic = self.topic.clone();
         Box::new(
             self.inner
                 .get_async_connection()
                 .and_then(move |conn| {
                     ::redis::cmd("RPUSH")
-                        .arg(DEFAULT_TOPIC)
+                        .arg(topic)
                         .arg(packet)
                         .query_async::<_, i32>(conn)
                 })
